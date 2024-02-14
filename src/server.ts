@@ -2,17 +2,14 @@ import { PrismaClient } from '@prisma/client'
 import fastify from 'fastify'
 import {z} from 'zod'
 
-//import querystring from 'node:querystring'
-
 const app = fastify()
 
 const prisma = new PrismaClient()
-/*
-app.get('/cep', async () => {
-    const cep = await prisma.cep.findMany()
-    return {cep}
+
+app.delete('/cep', async (request, reply) => {
+    await prisma.cep.deleteMany()
+    return reply.status(204).send()
 })
-*/
 
 app.get('/cep', async (request) => {
     const cep = await prisma.cep.findMany()
@@ -38,7 +35,6 @@ app.get('/cep', async (request) => {
         }
     }
 })
-
 
 app.post('/cep', async (request, reply) => {
     const createCepSchema = z.object({
