@@ -17,21 +17,26 @@ app.get('/cep', async (request) => {
     const req_url_array = request.url.split('?')
 
     if (req_url_array.length == 1) {
-        return {cep}
+        return {cep} // list all ceps
     } else {
         const cep_to_search = req_url_array[1].split('=')[1]
-        let found_cep = false
-        for (let i=0; i<cep.length; i++)
-        {
-            if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
-                found_cep = true
-            }
+        if(cep_to_search.trim() === '') {
+            return {'message': ''}
         }
-        
-        if (found_cep){
-            return {'message': 'CEP encontrado com sucesso.'}
-        } else {
-            return {'message': 'CEP não encontrado.'}
+        else {
+            let found_cep = false
+            for (let i=0; i<cep.length; i++)
+            {
+                if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
+                    found_cep = true
+                }
+            }
+            
+            if (found_cep){
+                return {'message': 'CEP encontrado com sucesso.'}
+            } else {
+                return {'message': 'CEP não encontrado.'}
+            }
         }
     }
 })
