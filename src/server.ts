@@ -120,7 +120,7 @@ app.post('/ceps', async (request, reply) => {
         ['12954999','12940001','Atibaia'],
         ['13479999','13465001','Americana'],
         ['13929999','13900001','Amparo, Jaguariuna, Pedreira'],
-        ['13465001','13479999','Americana']  
+        ['13479999','13465001','Americana']  
     ]
 
     for (let i=0; i<data.length; i++){
