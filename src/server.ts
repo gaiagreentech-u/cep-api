@@ -124,8 +124,8 @@ app.post('/ceps', async (request, reply) => {
     ]
 
     for (let i=0; i<data.length; i++){
-        const inicial = data[i][0]
-        const final = data[i][1]
+        const final = data[i][0]
+        const inicial = data[i][1]
         const descricao = data[i][2]
 
         await prisma.cep.create({
