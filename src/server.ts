@@ -27,15 +27,18 @@ app.get('/cep', async (request) => {
         }
         else {
             let found_cep = false
+            let found_regiao = ''
             for (let i=0; i<cep.length; i++)
             {
                 if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
+                    found_regiao = cep[i].descricao
                     found_cep = true
+                    break
                 }
             }
             
             if (found_cep){
-                return {'message': 'Estamos disponíveis em sua cidade.'}
+                return {'message': 'Estamos disponíveis em sua cidade: ' + found_regiao}
             } else {
                 return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
             }
