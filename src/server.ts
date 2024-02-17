@@ -20,6 +20,7 @@ app.get('/cep', async (request) => {
         return {cep} // list all ceps
     } else {
         const cep_to_search = req_url_array[1].split('=')[1]
+        console.log(cep_to_search)
         if(cep_to_search.trim() === '') {
             return {'message': ''}
         }
