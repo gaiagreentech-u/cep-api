@@ -35,9 +35,9 @@ app.get('/cep', async (request) => {
             }
             
             if (found_cep){
-                return {'message': 'CEP encontrado com sucesso.'}
+                return {'message': 'Estamos disponíveis em sua cidade.'}
             } else {
-                return {'message': 'CEP não encontrado.'}
+                return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
             }
         }
     }
