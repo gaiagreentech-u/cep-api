@@ -76,17 +76,17 @@ app.post('/ceps', async (request, reply) => {
         ['6889999','6750001','Taboão da Serra, Embu das Artes, Itapecerica da Serra'],
         ['8939999','8600001','Suzano, Mogi das Cruzes, Guararema'],
         ['18146999','18000001','Sorocaba, Votorantim, Mairinque, Alumínio, São Roque'],
-        ['1599999','1000000','São Paulo Centro'],
+        ['1599999','1000000','Centro de São Paulo'],
         ['13199999','13170001','Sumaré, Hortolândia, Monte Mor'],
-        ['6999999','6890000','São Lourenço Da Serra, Embu-guaçu, Juquitiba'],
+        ['6999999','6890000','São Lourenço Da Serra, Embu-Guaçu, Juquitiba'],
         ['9399999','9000001','Santo André, Mauá'],
         ['8499999','8000000','São Paulo Zona Leste 2'],
         ['6699999','6550000','Pirapora do Bom Jesus, Itapevi, Jandira'],
         ['7699999','7500000','Santa Isabel, Mairiporã'],
-        ['3999999','3000000','São Paulo Zona Leste'],
-        ['9999999','9500001','São Caetano do Sul, S. Bernardo Do Campo, Diadema'],
-        ['2999999','2000000','São Paulo Zona Norte'],
-        ['5899999','5000000','São Paulo Zona Oeste'],
+        ['3999999','3000000','Zona Leste de São Paulo'],
+        ['9999999','9500001','São Caetano do Sul, São Bernardo do Campo, Diadema'],
+        ['2999999','2000000','Zona Norte de São Paulo'],
+        ['5899999','5000000','Zona Oeste de São Paulo'],
         ['9499999','9400001','Ribeirão Pires, Rio Grande da Serra'],
         ['18179999','18160000','Salto de Pirapora, Piedade'],
         ['18185000','18185000','Pilar do Sul'],
@@ -95,10 +95,9 @@ app.post('/ceps', async (request, reply) => {
         ['6299999','6000001','Osasco'],
         ['13856999','13800001','Mogi Mirim, Holambra, Mogi Guaçu'],
         ['12349999','12300001','Jacarei'],
-        ['13577999','13530000','Itirapina, Ipeuna, São Carlos'],
+        ['13577999','13530000','Itirapina, Ipeúna, São Carlos'],
         ['18549999','18500000','Laranjal Paulista, Cerquilho, Tietê, Porto Feliz'],
-        ['77090002','77090002','Pedido Interno'],
-        ['7499999','7000001','Guarulhos, Aruja'],
+        ['7499999','7000001','Guarulhos, Arujá'],
         ['8599999','8500001','Ferraz de Vasconcelos, Poã, Itaquaquecetuba'],
         ['13379999','13350000','Elias Fausto, Capivari, Rafard e Mombuca'],
         ['6749999','6700000','Cotia, Vargem Grande Paulista'],
@@ -107,19 +106,19 @@ app.post('/ceps', async (request, reply) => {
         ['12916399','12916399','Bragança Paulista'],
         ['12910110','12910110','Bragança Paulista'],
         ['12922820','12922820','Bragança Paulista'],
-        ['6549999','6300001','Carapicuiba, Barueri, Santana de Parnaiba'],
+        ['6549999','6300001','Carapicuíba, Barueri, Santana de Parnaíba'],
         ['12922190','12922190','Bragança Paulista'],
         ['7999999','7700001','Caieiras, Cajamar, Franco da Rocha,  Francisco Morato'],
-        ['18569999','18550001','Boituva, Ipero'],
+        ['18569999','18550001','Boituva, Iperó'],
         ['12904160','12904160','Bragança Paulista'],
-        ['18159999','18147000','Aracariguama, Ibiuna'],
+        ['18159999','18147000','Araçariguama, Ibiúna'],
         ['12999999','12955000','Bom Jesus dos Perdões, Nazaré Paulista, Piracaia, Joanópolis, Pinhalzinho'],
-        ['18289999','18190000','Araçoiaba da Serra, Capela do  Alto, Tatui, Cesário Lange'],
+        ['18289999','18190000','Araçoiaba da Serra, Capela do Alto, Tatuí, Cesário Lange'],
         ['13169999','13160001','Artur Nogueira'],
         ['13624999','13600001','Araras, Leme'],
         ['12954999','12940001','Atibaia'],
         ['13479999','13465001','Americana'],
-        ['13929999','13900001','Amparo, Jaguariuna, Pedreira'],
+        ['13929999','13900001','Amparo, Jaguariúna, Pedreira'],
         ['13479999','13465001','Americana']  
     ]
 
@@ -134,7 +133,8 @@ app.post('/ceps', async (request, reply) => {
                 final,
                 descricao,
             }
-        })    }
+        })    
+    }
 
     return reply.status(201).send()
 })
