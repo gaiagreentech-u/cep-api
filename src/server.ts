@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import fastify from 'fastify'
 import {z} from 'zod'
+import PDFDocument from 'pdfkit';
+import fs from  'fs'
 
 const app = fastify()
 
@@ -10,6 +12,56 @@ app.delete('/cep', async (request, reply) => {
     await prisma.cep.deleteMany()
     return reply.status(204).send()
 })
+
+
+app.get('/pdf', async (request, res) => {
+    const req_url_array = request.url.split('?')
+
+    let name = 'anybody'
+    let local = 'world'
+    if (req_url_array.length > 1) {
+        let request_data = req_url_array[1].split('&') //
+        name = decodeURI(request_data[0].split('=')[1])
+        local = decodeURI(request_data[1].split('=')[1])
+    }
+
+    const doc = new PDFDocument
+    const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam in suscipit purus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Vivamus nec hendrerit felis. Morbi aliquam facilisis risus eu lacinia. Sed eu leo in turpis fringilla hendrerit. Ut nec accumsan nisl. Suspendisse rhoncus nisl posuere tortor tempus et dapibus elit porta. Cras leo neque, elementum a rhoncus ut, vestibulum non nibh. Phasellus pretium justo turpis. Etiam vulputate, odio vitae tincidunt ultricies, eros odio dapibus nisi, ut tincidunt lacus arcu eu elit. Aenean velit erat, vehicula eget lacinia ut, dignissim non tellus. Aliquam nec lacus mi, sed vestibulum nunc. Suspendisse potenti. Curabitur vitae sem turpis. Vestibulum sed neque eget dolor dapibus porttitor at sit amet sem. Fusce a turpis lorem. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;'
+    
+    doc.path('M 30,280 L 130,400 Q 160,400 180,400 C 220,240 230,360 330,430 L 430,370')
+        .stroke( "blue")
+    doc.polygon([100, 50], [50, 130], [150, 130]);
+    doc.circle(100, 100, 40)
+   .lineWidth(3)
+   .fillOpacity(0.8)
+   .fillAndStroke("red", "#900")
+    doc.stroke();
+    // doc.pipe(fs.createWriteStream('pdf_file.pdf'))
+    doc.pipe(res.raw)
+    doc.text(`Hello ${name}!`, 100, 180)
+
+    // Set the font size
+    doc.fontSize(24);
+
+    // Using a standard PDF font
+    doc.font('Times-Roman')
+    .text(`Hello ${name} from ${local}!`)
+    .moveDown(0.5);
+
+    doc.fontSize(12);
+    
+   doc.fillAndStroke("grey", "#900")
+    doc.text(`This text is left aligned. ${lorem}`, {
+        width: 410,
+        align: 'left'
+      }
+      );
+
+    doc.end()
+
+})
+
+
 
 app.get('/cep', async (request) => {
     const cep = await prisma.cep.findMany()
