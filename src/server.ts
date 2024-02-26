@@ -50,15 +50,13 @@ app.get('/pdf', async (request, res) => {
 
     doc.fontSize(12);
     
-   doc.fillAndStroke("grey", "#900")
+    doc.fillAndStroke("grey", "#900")
     doc.text(`This text is left aligned. ${lorem}`, {
         width: 410,
         align: 'left'
       }
       );
-
     doc.end()
-
 })
 
 
@@ -97,6 +95,20 @@ app.get('/cep', async (request) => {
         }
     }
 })
+
+app.get('/cep_by_id', async (request) => {
+    const req_url_array = request.url.split('?')
+
+    const id_to_search = req_url_array[1].split('=')[1]
+    const result = await prisma.cep.findUnique({
+        where: {
+          id: id_to_search,
+        },
+      })
+
+    return {result}
+})
+
 
 app.post('/cep', async (request, reply) => {
     const createCepSchema = z.object({
