@@ -148,16 +148,21 @@ app.post('/cep', async (request, reply) => {
         final: z.string(), 
         descricao: z.string(),
     })
-    const {inicial, final, descricao} = createCepSchema.parse(request.body)
-
-    await prisma.cep.create({
-        data: {
-            inicial,
-            final,
-            descricao,
+    try {
+        const {inicial, final, descricao} = createCepSchema.parse(request.body)
+        const cep = await prisma.cep.create({
+            data: {
+                inicial,
+                final,
+                descricao,
+            }
+        })
+        return reply.status(201).send(cep)
+    } catch (error) {
+        if (error instanceof z.ZodError){
+            return reply.status(400).send(error.issues)
         }
-    })
-    return reply.status(201).send()
+    }
 })
 
 app.patch('/cep', async (request, reply) => {
