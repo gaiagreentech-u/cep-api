@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import fastify from 'fastify'
+import fastify, { FastifyRequest } from 'fastify'
+import route from 'fastify'
 import {z} from 'zod'
 import PDFDocument from 'pdfkit';
 import fs from  'fs'
@@ -8,11 +9,29 @@ const app = fastify()
 
 const prisma = new PrismaClient()
 
-app.delete('/cep', async (request, reply) => {
+app.delete('/cep/:id', async (request, reply) => {
+    const id = get_id_from_request_url(request);
+
+    const query_cep = { where: { id: id } }
+    
+    const find_cep = await prisma.cep.findUnique(query_cep)
+    
+    if (find_cep) {
+        const result = await prisma.cep.delete({
+            where: {
+              id: id,
+            },
+        })
+        return reply.status(204).send({result})
+    } else {
+        return reply.status(422).send({'message': 'id não encontrado: ' + id})
+    }
+})
+
+app.delete('/ceps', async (request, reply) => {
     await prisma.cep.deleteMany()
     return reply.status(204).send()
 })
-
 
 app.get('/pdf', async (request, res) => {
     const req_url_array = request.url.split('?')
@@ -59,9 +78,7 @@ app.get('/pdf', async (request, res) => {
     doc.end()
 })
 
-
-
-app.get('/cep', async (request) => {
+app.get('/cep', async (request, reply) => {
     const cep = await prisma.cep.findMany()
 
     const req_url_array = request.url.split('?')
@@ -69,46 +86,61 @@ app.get('/cep', async (request) => {
     if (req_url_array.length == 1) {
         return {cep} // list all ceps
     } else {
-        const cep_to_search = req_url_array[1].split('=')[1].replace('-','')
 
-        console.log(cep_to_search)
-        if(cep_to_search.trim() === '') {
-            return {'message': ''}
-        }
-        else {
-            let found_cep = false
-            let found_regiao = ''
-            for (let i=0; i<cep.length; i++)
-            {
-                if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
-                    found_regiao = cep[i].descricao
-                    found_cep = true
-                    break
+        const req_query_array = req_url_array[1].split('=')
+
+        if (req_query_array.length == 0){
+            // explicit id
+            const id = req_url_array[1]
+            const result = await prisma.cep.findUnique({
+                where: {
+                  id: id,
+                },
+              })
+            return reply.status(200).send({result})
+        } else {
+
+            const cep_to_search = req_query_array[1].replace('-','')
+            
+            
+            
+            console.log(cep_to_search)
+            if(cep_to_search.trim() === '') {
+                return {'message': ''}
+            }
+            else {
+                let found_cep = false
+                let found_regiao = ''
+                for (let i=0; i<cep.length; i++)
+                {
+                    if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
+                        found_regiao = cep[i].descricao
+                        found_cep = true
+                        break
+                    }
+                }
+                
+                if (found_cep){
+                    return {'message': 'Estamos disponíveis em sua cidade: ' + found_regiao}
+                } else {
+                    return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
                 }
             }
-            
-            if (found_cep){
-                return {'message': 'Estamos disponíveis em sua cidade: ' + found_regiao}
-            } else {
-                return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
-            }
-        }
+        } 
     }
 })
 
-app.get('/cep_by_id', async (request) => {
-    const req_url_array = request.url.split('?')
+app.get('/cep/:id', async (request) => {
+    const id = get_id_from_request_url(request);
 
-    const id_to_search = req_url_array[1].split('=')[1]
-    const result = await prisma.cep.findUnique({
+    const result = await prisma.cep.findUniqueOrThrow({
         where: {
-          id: id_to_search,
+          id: id,
         },
       })
-
+      console.log(request.url)
     return {result}
 })
-
 
 app.post('/cep', async (request, reply) => {
     const createCepSchema = z.object({
@@ -126,6 +158,38 @@ app.post('/cep', async (request, reply) => {
         }
     })
     return reply.status(201).send()
+})
+
+app.patch('/cep', async (request, reply) => {
+    const createCepSchema = z.object({
+        id: z.string(),
+        inicial: z.string(),
+        final: z.string(), 
+        descricao: z.string(),
+    })
+    const {id, inicial, final, descricao} = createCepSchema.parse(request.body)
+
+    const findRecord = await prisma.cep.findUnique({
+        where: {
+          id: id,
+        },
+      })
+
+    if (findRecord) {
+        const updateCep = await prisma.cep.update({
+            where: {
+                id: id
+            },
+            data: {
+                inicial,
+                final,
+                descricao,
+            }
+        })
+        return reply.status(200).send(updateCep)
+    } else {
+        return reply.status(422).send({'message': 'id não encontrado: ' + id})
+    }
 })
 
 app.post('/ceps', async (request, reply) => {
@@ -203,10 +267,15 @@ app.post('/ceps', async (request, reply) => {
     return reply.status(201).send()
 })
 
-
 app.listen({
     host: '0.0.0.0',
     port: process.env.PORT ? Number(process.env.PORT) : 3333,
 }).then (() => {
     console.log('HTTP server running...')
 })
+
+function get_id_from_request_url(request: FastifyRequest) {
+    const req_url_array = request.url.split('/');
+    const id = req_url_array[req_url_array.length - 1];
+    return id;
+}
