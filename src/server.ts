@@ -165,7 +165,7 @@ app.post('/cep', async (request, reply) => {
     }
 })
 
-app.patch('/cep', async (request, reply) => {
+app.put('/cep', async (request, reply) => {
     const createCepSchema = z.object({
         id: z.string(),
         inicial: z.string(),
