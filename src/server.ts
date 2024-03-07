@@ -33,49 +33,77 @@ app.delete('/ceps', async (request, reply) => {
     return reply.status(204).send()
 })
 
-app.get('/pdf', async (request, res) => {
-    const req_url_array = request.url.split('?')
+app.post('/pdf', async (request, reply) => {
+    
+    const termoSchema = z.object({
+        nome_doador: z.string(),
+        cpf_doador: z.string(),
+        lista_itens: z.string(),
+        peso_estimado: z.string(),
+        numero_pedido: z.string(),
+    })
 
-    let name = 'anybody'
-    let local = 'world'
-    if (req_url_array.length > 1) {
-        let request_data = req_url_array[1].split('&') //
-        name = decodeURI(request_data[0].split('=')[1])
-        local = decodeURI(request_data[1].split('=')[1])
+    try {
+        console.log(request.body)
+        const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido} = termoSchema.parse(request.body)
+        //const {nome_usuario, cidade_usuario, cpf_usuario, nome_recicladora, cnpj_recicladora} = termoSchema.parse(request.body)
+        //const {nome} = termoSchema.parse(request.body)
+
+        const doc = new PDFDocument
+        const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO'
+        const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` + 
+
+                        `Por meio deste Termo de Doação de Eletroeletrônico (“Termo”), transmito de livre e espontânea vontade, de forma gratuita e sem quaisquer ônus à Coletas Para Economia Circular LTDA, inscrita no CNPJ no. 49.840.854/0001-75 a propriedade, posse e o domínio que eu exercia sobre o(s) seguinte(s) bem(ns) eletrônico(s) que se encontra(m) em desuso, do(s) qual(is) sou legítimo possuidor e proprietário (“Doação”):\n` +
+
+                        `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg` +
+
+                        `\n\nTambém declaro que estou de acordo com a destinação sustentável que será dada ao Objeto Doado pela GAIA, que será para reciclagem na recicladora parceira Indústria Fox Economia Circular LTDA, inscrita no CNPJ: no. 10.804.529/0001-11 em acordo com a Política Nacional de Resíduos Sólidos (PNRS) – Lei 12.305/10.` +
+
+                        `\n\nAo realizar a Doação, declaro ter removido todo e qualquer dado pessoal possível de exclusão do Objeto Doado, seja pela remoção de chip, cartão de memória, ou outros, bem como declaro ter feito todo o possível para resetar o Objeto Doado a partir da restauração ao padrão de fábrica, não o tendo resetado apenas em caso de eletrônicos com defeitos que impossibilitem a conclusão desta ação.` +
+
+                        `\n\nDeclaro ainda, que forneci meus dados pessoais para realização da Doação, bem como para comunicação e execução deste Termo, os quais serão tratados de acordo com a Lei Geral de Proteção de Dados Pessoais, Lei n.º 13.709, de 14 de agosto de 2018 (“LGPD”), e demais leis aplicáveis à proteção de dados, sendo garantido o uso exclusivo, armazenamento e/ou compartilhamento dos dados apenas para o cumprimento das referidas finalidades.` + 
+
+                        `\n\nEste Termo entrará em vigor, para todos os fins de direito, na data do seu aceite e permanecerá válido por prazo indeterminado.` +
+
+                        `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
+
+                        `\n\nE, assim, consinto com o presente Termo.`
+
+        const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
+
+
+        doc.pipe(reply.raw)
+        doc.text(titulo, 100, 80)
+    
+        // Set the font size
+        doc.fontSize(28);
+    
+        // Using a standard PDF font
+        //doc.font('Times-Roman')
+        //.text(`Recicladora ${nome_recicladora} CNPJ ${cnpj_recicladora}!`)
+        doc.moveDown(0.5);
+    
+        doc.fontSize(10);
+        
+        //doc.fillAndStroke("darkgrey", "#1200")
+        doc.text(`${body}`, {
+            width: 440,
+            align: 'left'
+          }
+          );
+        doc.fontSize(12)
+        doc.text(`${doador}`)
+        // Scale proprotionally to the specified width
+        doc.image('assinatura.png', {width: 220})
+        doc.end()
+
+    } catch (error) {
+        if (error instanceof z.ZodError){
+            return reply.status(400).send(error.issues)
+        }        
     }
 
-    const doc = new PDFDocument
-    const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam in suscipit purus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Vivamus nec hendrerit felis. Morbi aliquam facilisis risus eu lacinia. Sed eu leo in turpis fringilla hendrerit. Ut nec accumsan nisl. Suspendisse rhoncus nisl posuere tortor tempus et dapibus elit porta. Cras leo neque, elementum a rhoncus ut, vestibulum non nibh. Phasellus pretium justo turpis. Etiam vulputate, odio vitae tincidunt ultricies, eros odio dapibus nisi, ut tincidunt lacus arcu eu elit. Aenean velit erat, vehicula eget lacinia ut, dignissim non tellus. Aliquam nec lacus mi, sed vestibulum nunc. Suspendisse potenti. Curabitur vitae sem turpis. Vestibulum sed neque eget dolor dapibus porttitor at sit amet sem. Fusce a turpis lorem. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;'
-    
-    doc.path('M 30,280 L 130,400 Q 160,400 180,400 C 220,240 230,360 330,430 L 430,370')
-        .stroke( "blue")
-    doc.polygon([100, 50], [50, 130], [150, 130]);
-    doc.circle(100, 100, 40)
-   .lineWidth(3)
-   .fillOpacity(0.8)
-   .fillAndStroke("red", "#900")
-    doc.stroke();
-    // doc.pipe(fs.createWriteStream('pdf_file.pdf'))
-    doc.pipe(res.raw)
-    doc.text(`Hello ${name}!`, 100, 180)
 
-    // Set the font size
-    doc.fontSize(24);
-
-    // Using a standard PDF font
-    doc.font('Times-Roman')
-    .text(`Hello ${name} from ${local}!`)
-    .moveDown(0.5);
-
-    doc.fontSize(12);
-    
-    doc.fillAndStroke("grey", "#900")
-    doc.text(`This text is left aligned. ${lorem}`, {
-        width: 410,
-        align: 'left'
-      }
-      );
-    doc.end()
 })
 
 app.get('/cep', async (request, reply) => {
@@ -143,7 +171,7 @@ app.get('/cep/:id', async (request) => {
 })
 
 app.post('/cep', async (request, reply) => {
-    const createCepSchema = z.object({
+        const createCepSchema = z.object({
         inicial: z.string(),
         final: z.string(), 
         descricao: z.string(),
