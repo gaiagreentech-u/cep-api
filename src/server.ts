@@ -1,10 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import fastify, { FastifyRequest } from 'fastify'
-import route from 'fastify'
 import {z} from 'zod'
 import PDFDocument from 'pdfkit';
-import fs from  'fs'
-
+import { Base64Encode } from 'base64-stream'
 const app = fastify()
 
 const prisma = new PrismaClient()
@@ -49,13 +47,13 @@ app.post('/pdf', async (request, reply) => {
         //const {nome_usuario, cidade_usuario, cpf_usuario, nome_recicladora, cnpj_recicladora} = termoSchema.parse(request.body)
         //const {nome} = termoSchema.parse(request.body)
 
-        const doc = new PDFDocument
+        const doc = new PDFDocument()
         const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO'
         const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` + 
 
                         `Por meio deste Termo de Doação de Eletroeletrônico (“Termo”), transmito de livre e espontânea vontade, de forma gratuita e sem quaisquer ônus à Coletas Para Economia Circular LTDA, inscrita no CNPJ no. 49.840.854/0001-75 a propriedade, posse e o domínio que eu exercia sobre o(s) seguinte(s) bem(ns) eletrônico(s) que se encontra(m) em desuso, do(s) qual(is) sou legítimo possuidor e proprietário (“Doação”):\n` +
 
-                        `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg` +
+                        `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg\n(“Objeto(s) Doado(s)”)` +
 
                         `\n\nTambém declaro que estou de acordo com a destinação sustentável que será dada ao Objeto Doado pela GAIA, que será para reciclagem na recicladora parceira Indústria Fox Economia Circular LTDA, inscrita no CNPJ: no. 10.804.529/0001-11 em acordo com a Política Nacional de Resíduos Sólidos (PNRS) – Lei 12.305/10.` +
 
@@ -71,8 +69,8 @@ app.post('/pdf', async (request, reply) => {
 
         const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
 
-
-        doc.pipe(reply.raw)
+        var finalString = '' // contains the base64 string
+        var stream = doc.pipe(new Base64Encode())
         doc.text(titulo, 100, 80)
     
         // Set the font size
@@ -96,6 +94,16 @@ app.post('/pdf', async (request, reply) => {
         // Scale proprotionally to the specified width
         doc.image('assinatura.png', {width: 220})
         doc.end()
+
+
+        stream.on('data', function(chunk: string) {
+            finalString += chunk;
+        });
+        
+        stream.on('end', function() {
+            // the stream is at its end
+            console.log(finalString);
+        });
 
     } catch (error) {
         if (error instanceof z.ZodError){
