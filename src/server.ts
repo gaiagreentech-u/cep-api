@@ -3,6 +3,7 @@ import fastify, { FastifyRequest } from 'fastify'
 import {z} from 'zod'
 import PDFDocument from 'pdfkit';
 import { Base64Encode } from 'base64-stream'
+import fs from 'fs'
 const app = fastify()
 
 const prisma = new PrismaClient()
@@ -67,8 +68,7 @@ app.post('/pdf', async (request, reply) => {
 
         const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
 
-        var finalString = '' // contains the base64 string
-        var stream = doc.pipe(new Base64Encode())
+        doc.pipe(fs.createWriteStream(`./${numero_pedido}.pdf`))
         doc.text(titulo, 100, 80)
     
         // Set the font size
@@ -89,17 +89,6 @@ app.post('/pdf', async (request, reply) => {
         // Scale proprotionally to the specified width
         doc.image('assinatura.png', {width: 220})
         doc.end()
-
-
-        stream.on('data', function(chunk: string) {
-            finalString += chunk;
-        });
-        
-        stream.on('end', function() {
-            // the stream is at its end
-            console.log(finalString);
-        });
-
     } catch (error) {
         if (error instanceof z.ZodError){
             return reply.status(400).send(error.issues)
