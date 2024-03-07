@@ -44,8 +44,6 @@ app.post('/pdf', async (request, reply) => {
     try {
         console.log(request.body)
         const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido} = termoSchema.parse(request.body)
-        //const {nome_usuario, cidade_usuario, cpf_usuario, nome_recicladora, cnpj_recicladora} = termoSchema.parse(request.body)
-        //const {nome} = termoSchema.parse(request.body)
 
         const doc = new PDFDocument()
         const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO'
@@ -77,13 +75,10 @@ app.post('/pdf', async (request, reply) => {
         doc.fontSize(28);
     
         // Using a standard PDF font
-        //doc.font('Times-Roman')
-        //.text(`Recicladora ${nome_recicladora} CNPJ ${cnpj_recicladora}!`)
         doc.moveDown(0.5);
     
         doc.fontSize(10);
         
-        //doc.fillAndStroke("darkgrey", "#1200")
         doc.text(`${body}`, {
             width: 440,
             align: 'left'
@@ -110,8 +105,6 @@ app.post('/pdf', async (request, reply) => {
             return reply.status(400).send(error.issues)
         }        
     }
-
-
 })
 
 app.get('/cep', async (request, reply) => {
