@@ -96,6 +96,11 @@ app.post('/pdf', async (request, reply) => {
     }
 })
 
+app.get('/pdf_size', async (request, reply) => {
+    var stats = fs.statSync('3242353456432.pdf')
+    return {'message': 'Tamanho do 3242353456432.pdf: ' + stats.size}
+})
+
 app.get('/cep', async (request, reply) => {
     const cep = await prisma.cep.findMany()
 
