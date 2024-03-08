@@ -71,6 +71,8 @@ app.post('/pdf', async (request, reply) => {
         doc.pipe(reply.raw) //fs.createWriteStream(`/data/${numero_pedido}.pdf`)
         doc.text(titulo, 100, 80)
     
+        doc.end()
+        /*
         // Set the font size
         doc.fontSize(28);
     
@@ -89,6 +91,7 @@ app.post('/pdf', async (request, reply) => {
         // Scale proprotionally to the specified width
         doc.image('assinatura.png', {width: 220})
         doc.end()
+        */
     } catch (error) {
         if (error instanceof z.ZodError){
             return reply.status(400).send(error.issues)
