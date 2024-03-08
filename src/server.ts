@@ -72,7 +72,7 @@ app.post('/pdf', async (request, reply) => {
 
         const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
 
-        doc.pipe(reply.raw) //fs.createWriteStream(`/data/${numero_pedido}.pdf`)
+        doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`))
         doc.text(titulo, 100, 80)
     
         // Set the font size
