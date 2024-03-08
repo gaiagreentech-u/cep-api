@@ -32,38 +32,42 @@ app.delete('/ceps', async (request, reply) => {
     return reply.status(204).send()
 })
 
+/*
+Post calling with body:
+{
+    "nome_doador": "Marcelo",
+    "cpf_doador": "000.000.000-00",
+    "lista_itens": "Fone de ouvido, notebook, celular e geladeira.",
+    "peso_estimado": "18.5",
+    "numero_pedido": "3242353456433",
+    "assinatura": "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"
+}
+*/
+
 app.post('/pdf', async (request, reply) => {
-    
     const termoSchema = z.object({
         nome_doador: z.string(),
         cpf_doador: z.string(),
         lista_itens: z.string(),
         peso_estimado: z.string(),
         numero_pedido: z.string(),
+        assinatura: z.string()
     })
 
     try {
         console.log(request.body)
-        const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido} = termoSchema.parse(request.body)
+        const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido, assinatura} = termoSchema.parse(request.body)
 
         const doc = new PDFDocument()
         const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO'
         const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` + 
-
                         `Por meio deste Termo de Doação de Eletroeletrônico (“Termo”), transmito de livre e espontânea vontade, de forma gratuita e sem quaisquer ônus à Coletas Para Economia Circular LTDA, inscrita no CNPJ no. 49.840.854/0001-75 a propriedade, posse e o domínio que eu exercia sobre o(s) seguinte(s) bem(ns) eletrônico(s) que se encontra(m) em desuso, do(s) qual(is) sou legítimo possuidor e proprietário (“Doação”):\n` +
-
                         `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg\n(“Objeto(s) Doado(s)”)` +
-
                         `\n\nTambém declaro que estou de acordo com a destinação sustentável que será dada ao Objeto Doado pela GAIA, que será para reciclagem na recicladora parceira Indústria Fox Economia Circular LTDA, inscrita no CNPJ: no. 10.804.529/0001-11 em acordo com a Política Nacional de Resíduos Sólidos (PNRS) – Lei 12.305/10.` +
-
                         `\n\nAo realizar a Doação, declaro ter removido todo e qualquer dado pessoal possível de exclusão do Objeto Doado, seja pela remoção de chip, cartão de memória, ou outros, bem como declaro ter feito todo o possível para resetar o Objeto Doado a partir da restauração ao padrão de fábrica, não o tendo resetado apenas em caso de eletrônicos com defeitos que impossibilitem a conclusão desta ação.` +
-
                         `\n\nDeclaro ainda, que forneci meus dados pessoais para realização da Doação, bem como para comunicação e execução deste Termo, os quais serão tratados de acordo com a Lei Geral de Proteção de Dados Pessoais, Lei n.º 13.709, de 14 de agosto de 2018 (“LGPD”), e demais leis aplicáveis à proteção de dados, sendo garantido o uso exclusivo, armazenamento e/ou compartilhamento dos dados apenas para o cumprimento das referidas finalidades.` + 
-
                         `\n\nEste Termo entrará em vigor, para todos os fins de direito, na data do seu aceite e permanecerá válido por prazo indeterminado.` +
-
                         `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
-
                         `\n\nE, assim, consinto com o presente Termo.`
 
         const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
@@ -87,10 +91,9 @@ app.post('/pdf', async (request, reply) => {
           
         doc.fontSize(12)
         doc.text(`${doador}`)
-
-        // Scale proprotionally to the specified width
-        doc.image('/data/assinatura.png', {width: 220})
         
+        // Scale proprotionally to the specified width
+        doc.image(`data:image/png;base64,${assinatura}`, {width: 220})
         doc.end()
     } catch (error) {
         if (error instanceof z.ZodError){
