@@ -68,7 +68,7 @@ app.post('/pdf', async (request, reply) => {
 
         const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
 
-        doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`))
+        doc.pipe(reply.raw) //fs.createWriteStream(`/data/${numero_pedido}.pdf`)
         doc.text(titulo, 100, 80)
     
         // Set the font size
@@ -97,7 +97,7 @@ app.post('/pdf', async (request, reply) => {
 })
 
 app.get('/pdf_size', async (request, reply) => {
-    var name_file = '/data/3242353456432.pdf'
+    var name_file = '/data/3242353456433.pdf'
     var stats = fs.statSync(name_file)
     return {'message': `Tamanho do ${name_file}: ${stats.size} `}
 })
