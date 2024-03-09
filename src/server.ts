@@ -9,7 +9,7 @@ const app = fastify()
 const prisma = new PrismaClient()
 
 app.delete('/cep/:id', async (request, reply) => {
-    const id = get_id_from_request_url(request);
+    const id = get_parameter_from_request_url(request);
 
     const query_cep = { where: { id: id } }
     
@@ -102,10 +102,40 @@ app.post('/pdf', async (request, reply) => {
     }
 })
 
-app.get('/pdf_size', async (request, reply) => {
-    var name_file = '/data/3242353456433.pdf'
-    var stats = fs.statSync(name_file)
-    return {'message': `Tamanho do ${name_file}: ${stats.size} `}
+app.get('/pdf/:pedido', async (request, reply) => { 
+    const pedido = get_parameter_from_request_url(request); 
+    var file_pedido = `/data/${pedido}.pdf`  
+    //const file_teste = 'package.json'   
+    var stats = fs.statSync(file_pedido)
+    console.log(stats.size)
+    const stream = fs.createReadStream(file_pedido, 'binary')
+    return reply
+    //.header('content-length', stats.size )
+    .header('Content-Type', 'application/pdf')
+    //.type('application/pdf')
+    .send(stream)
+    
+    
+ /*
+    const pedido = get_parameter_from_request_url(request);
+    var file_pedido = `/data/${pedido}.pdf`
+    console.log(file_pedido)
+    
+    var stats = fs.statSync(file_pedido)
+    console.log(stats.size)
+
+    var stream = fs.createReadStream(file_pedido, 'binary',);
+
+    return reply.header('Content-Type', 'application/pdf')
+    .header('content-length', stats.size)
+    .type('application/pdf')
+    .send(stream).code(200)
+*/
+
+//    reply.header ('Content-Length', stat.size);
+//    reply.setHeader('Content-Type', 'application/pdf');
+//    reply.setHeader('Content-Disposition', 'attachment; filename=quote.pdf');
+//    file.pipe(reply.raw );
 })
 
 app.get('/cep', async (request, reply) => {
@@ -161,7 +191,7 @@ app.get('/cep', async (request, reply) => {
 })
 
 app.get('/cep/:id', async (request) => {
-    const id = get_id_from_request_url(request);
+    const id = get_parameter_from_request_url(request);
 
     const result = await prisma.cep.findUniqueOrThrow({
         where: {
@@ -309,7 +339,7 @@ app.listen({
     console.log('HTTP server running...')
 })
 
-function get_id_from_request_url(request: FastifyRequest) {
+function get_parameter_from_request_url(request: FastifyRequest) {
     const req_url_array = request.url.split('/');
     const id = req_url_array[req_url_array.length - 1];
     return id;
