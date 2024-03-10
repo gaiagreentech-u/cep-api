@@ -102,40 +102,43 @@ app.post('/pdf', async (request, reply) => {
     }
 })
 
-app.get('/pdf/:pedido', async (request, reply) => { 
-    const pedido = get_parameter_from_request_url(request); 
-    var file_pedido = `/data/${pedido}.pdf`  
-    //const file_teste = 'package.json'   
-    var stats = fs.statSync(file_pedido)
-    console.log(stats.size)
-    const stream = fs.createReadStream(file_pedido, 'binary')
-    return reply
-    //.header('content-length', stats.size )
-    .header('Content-Type', 'application/pdf')
-    //.type('application/pdf')
-    .send(stream)
-    
-    
- /*
-    const pedido = get_parameter_from_request_url(request);
-    var file_pedido = `/data/${pedido}.pdf`
-    console.log(file_pedido)
-    
-    var stats = fs.statSync(file_pedido)
-    console.log(stats.size)
 
-    var stream = fs.createReadStream(file_pedido, 'binary',);
+app.get('/jpg/:pedido', async (request, reply) => { 
+    var pedido = get_parameter_from_request_url(request); 
+    pedido = `/data/${pedido}.jpg` 
 
-    return reply.header('Content-Type', 'application/pdf')
-    .header('content-length', stats.size)
-    .type('application/pdf')
-    .send(stream).code(200)
-*/
+    try {
+        var stats = fs.statSync(pedido)
+    
+        fs.readFile(pedido, (err, fileBuffer) => {
+            reply.send(err || fileBuffer)
+        })
+    
+        return reply
+        .header('Content-Type', 'image/jpeg')
+        .header('content-length', stats.size )
+    } catch (error) {
+        return reply.status(400).send(error)
+    }
+})
 
-//    reply.header ('Content-Length', stat.size);
-//    reply.setHeader('Content-Type', 'application/pdf');
-//    reply.setHeader('Content-Disposition', 'attachment; filename=quote.pdf');
-//    file.pipe(reply.raw );
+app.get('/pedido/:pedido', async (request, reply) => { 
+    var pedido = get_parameter_from_request_url(request); 
+    pedido = `/data/${pedido}.pdf` 
+
+    try {
+        var stats = fs.statSync(pedido)
+
+        fs.readFile(pedido, (err, fileBuffer) => {
+            reply.send(err || fileBuffer)
+        })
+    
+        return reply
+        .header('Content-Type', 'application/pdf')
+        .header('content-length', stats.size )
+    } catch (error) {
+        return reply.status(400).send(error)
+    }
 })
 
 app.get('/cep', async (request, reply) => {
