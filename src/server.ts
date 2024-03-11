@@ -129,71 +129,78 @@ app.get('/jpg/:pedido', async (request, reply) => {
 app.get('/pedido/:pedido', async (request, reply) => { 
     var pedido = get_parameter_from_request_url(request); 
     pedido = `/data/${pedido}.pdf` 
-    console.log(request.headers)
-    try {
-        var stats = fs.statSync(pedido)
 
-        fs.readFile(pedido, (err, fileBuffer) => {
-            reply.send(err || fileBuffer)
-        })
+    let { allowed_access, user_agent } = allowedAccess(request);
     
-        return reply
-        .header('Content-Type', 'application/pdf')
-        .header('content-length', stats.size )
-    } catch (error) {
-        return reply.status(400).send(error)
+    if (allowed_access) {
+        try {
+            var stats = fs.statSync(pedido)
+    
+            fs.readFile(pedido, (err, fileBuffer) => {
+                reply.send(err || fileBuffer)
+            })
+        
+            return reply
+            .header('Content-Type', 'application/pdf')
+            .header('content-length', stats.size )
+        } catch (error) {
+            return reply.status(400).send(error)
+        }
+    } else {
+        return reply.status(401).send({'message': `Unauthorized ${user_agent}`})
     }
 })
 
 app.get('/cep', async (request, reply) => {
-    const cep = await prisma.cep.findMany()
 
-    const req_url_array = request.url.split('?')
-
-    if (req_url_array.length == 1) {
-        return {cep} // list all ceps
-    } else {
-
-        const req_query_array = req_url_array[1].split('=')
-
-        if (req_query_array.length == 0){
-            // explicit id
-            const id = req_url_array[1]
-            const result = await prisma.cep.findUnique({
-                where: {
-                  id: id,
-                },
-              })
-            return reply.status(200).send({result})
+    try {
+        const cep = await prisma.cep.findMany()
+    
+        const req_url_array = request.url.split('?')
+    
+        if (req_url_array.length == 1) {
+            return {cep} // list all ceps
         } else {
-
-            const cep_to_search = req_query_array[1].replace('-','')
-            
-            
-            
-            console.log(cep_to_search)
-            if(cep_to_search.trim() === '') {
-                return {'message': ''}
-            }
-            else {
-                let found_cep = false
-                let found_regiao = ''
-                for (let i=0; i<cep.length; i++)
-                {
-                    if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
-                        found_regiao = cep[i].descricao
-                        found_cep = true
-                        break
+    
+            const req_query_array = req_url_array[1].split('=')
+    
+            if (req_query_array.length == 0){
+                // explicit id
+                const id = req_url_array[1]
+                const result = await prisma.cep.findUnique({
+                    where: {
+                      id: id,
+                    },
+                  })
+                return reply.status(200).send({result})
+            } else {
+                const cep_to_search = req_query_array[1].replace('-','')
+                console.log(cep_to_search)
+                if(cep_to_search.trim() === '') {
+                    return {'message': ''}
+                }
+                else {
+                    let found_cep = false
+                    let found_regiao = ''
+                    for (let i=0; i<cep.length; i++)
+                    {
+                        if (Number(cep_to_search) >= Number(cep[i].inicial) &&  Number(cep_to_search) <= Number(cep[i].final)) {
+                            found_regiao = cep[i].descricao
+                            found_cep = true
+                            break
+                        }
+                    }
+                    
+                    if (found_cep){
+                        return {'message': 'Estamos disponíveis em sua cidade: ' + found_regiao}
+                    } else {
+                        return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
                     }
                 }
-                
-                if (found_cep){
-                    return {'message': 'Estamos disponíveis em sua cidade: ' + found_regiao}
-                } else {
-                    return {'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'}
-                }
-            }
-        } 
+            } 
+        }
+    } catch (error) {
+        return reply.status(400).send(error)
     }
 })
 
@@ -210,25 +217,31 @@ app.get('/cep/:id', async (request) => {
 })
 
 app.post('/cep', async (request, reply) => {
+    let { allowed_access, user_agent } = allowedAccess(request);
+    console.log(String(request.headers['user-agent']))
+    if (allowed_access) {
         const createCepSchema = z.object({
-        inicial: z.string(),
-        final: z.string(), 
-        descricao: z.string(),
-    })
-    try {
-        const {inicial, final, descricao} = createCepSchema.parse(request.body)
-        const cep = await prisma.cep.create({
-            data: {
-                inicial,
-                final,
-                descricao,
-            }
+            inicial: z.string(),
+            final: z.string(), 
+            descricao: z.string(),
         })
-        return reply.status(201).send(cep)
-    } catch (error) {
-        if (error instanceof z.ZodError){
-            return reply.status(400).send(error.issues)
+        try {
+            const {inicial, final, descricao} = createCepSchema.parse(request.body)
+            const cep = await prisma.cep.create({
+                data: {
+                    inicial,
+                    final,
+                    descricao,
+                }
+            })
+            return reply.status(201).send(cep)
+        } catch (error) {
+            if (error instanceof z.ZodError){
+                return reply.status(400).send(error.issues)
+            }
         }
+    } else {
+        return reply.status(401).send({'message': `Unauthorized ${user_agent}`})
     }
 })
 
@@ -345,6 +358,14 @@ app.listen({
 }).then (() => {
     console.log('HTTP server running...')
 })
+
+function allowedAccess(request: FastifyRequest) {
+    let user_agent = String(request.headers['user-agent']);
+    let allowed_agents = ['PostmanRuntime/7.36.3', 'Bubble',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'];
+    let allowed_access = allowed_agents.indexOf(user_agent) > -1;
+    return { allowed_access, user_agent };
+}
 
 function dateTimeFormatted() {
     let ts = Date.now();
