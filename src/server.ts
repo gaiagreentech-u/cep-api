@@ -70,7 +70,7 @@ app.post('/pdf', async (request, reply) => {
                         `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
                         `\n\nE, assim, consinto com o presente Termo.`
 
-        const doador = `\n\nDoador: ${nome_doador} CPF: ${cpf_doador}` 
+        const doador = `\nDoador: ${nome_doador}   CPF: ${cpf_doador}\n` 
 
         doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`))
         doc.text(titulo, 100, 80)
@@ -94,6 +94,10 @@ app.post('/pdf', async (request, reply) => {
         
         // Scale proprotionally to the specified width
         doc.image(`data:image/png;base64,${assinatura}`, {width: 220})
+        doc.text(dateTimeFormatted(), {
+            width: 440,
+            align: 'right'
+          })
         doc.end()
     } catch (error) {
         if (error instanceof z.ZodError){
@@ -341,6 +345,21 @@ app.listen({
 }).then (() => {
     console.log('HTTP server running...')
 })
+
+function dateTimeFormatted() {
+    let ts = Date.now();
+
+    let date_ob = new Date(ts);
+    let date = date_ob.getDate();
+    let month = date_ob.getMonth() + 1;
+    let year = date_ob.getFullYear();
+
+    let hh = date_ob.getHours();
+    let mm = date_ob.getMinutes();
+    let ss = date_ob.getSeconds();
+
+    return `${date}-${month}-${year} ${hh}:${mm}:${ss}`;
+}
 
 function get_parameter_from_request_url(request: FastifyRequest) {
     const req_url_array = request.url.split('/');
