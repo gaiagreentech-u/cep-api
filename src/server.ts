@@ -129,7 +129,7 @@ app.get('/jpg/:pedido', async (request, reply) => {
 app.get('/pedido/:pedido', async (request, reply) => { 
     var pedido = get_parameter_from_request_url(request); 
     pedido = `/data/${pedido}.pdf` 
-
+    console.log(request.headers)
     try {
         var stats = fs.statSync(pedido)
 
