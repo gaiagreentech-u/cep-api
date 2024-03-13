@@ -55,54 +55,14 @@ app.post('/pdf', async (request, reply) => {
     })
 
     try {
-        console.log(request.body)
         const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido, assinatura} = termoSchema.parse(request.body)
-
-        const doc = new PDFDocument()
-        const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO'
-        const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` + 
-                        `Por meio deste Termo de Doação de Eletroeletrônico (“Termo”), transmito de livre e espontânea vontade, de forma gratuita e sem quaisquer ônus à Coletas Para Economia Circular LTDA, inscrita no CNPJ no. 49.840.854/0001-75 a propriedade, posse e o domínio que eu exercia sobre o(s) seguinte(s) bem(ns) eletrônico(s) que se encontra(m) em desuso, do(s) qual(is) sou legítimo possuidor e proprietário (“Doação”):\n` +
-                        `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg\n(“Objeto(s) Doado(s)”)` +
-                        `\n\nTambém declaro que estou de acordo com a destinação sustentável que será dada ao Objeto Doado pela GAIA, que será para reciclagem na recicladora parceira Indústria Fox Economia Circular LTDA, inscrita no CNPJ: no. 10.804.529/0001-11 em acordo com a Política Nacional de Resíduos Sólidos (PNRS) – Lei 12.305/10.` +
-                        `\n\nAo realizar a Doação, declaro ter removido todo e qualquer dado pessoal possível de exclusão do Objeto Doado, seja pela remoção de chip, cartão de memória, ou outros, bem como declaro ter feito todo o possível para resetar o Objeto Doado a partir da restauração ao padrão de fábrica, não o tendo resetado apenas em caso de eletrônicos com defeitos que impossibilitem a conclusão desta ação.` +
-                        `\n\nDeclaro ainda, que forneci meus dados pessoais para realização da Doação, bem como para comunicação e execução deste Termo, os quais serão tratados de acordo com a Lei Geral de Proteção de Dados Pessoais, Lei n.º 13.709, de 14 de agosto de 2018 (“LGPD”), e demais leis aplicáveis à proteção de dados, sendo garantido o uso exclusivo, armazenamento e/ou compartilhamento dos dados apenas para o cumprimento das referidas finalidades.` + 
-                        `\n\nEste Termo entrará em vigor, para todos os fins de direito, na data do seu aceite e permanecerá válido por prazo indeterminado.` +
-                        `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
-                        `\n\nE, assim, consinto com o presente Termo.`
-
-        const doador = `\nDoador: ${nome_doador}   CPF: ${cpf_doador}\n` 
-
-        doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`))
-        doc.text(titulo, 100, 80)
-    
-        // Set the font size
-        doc.fontSize(28);
-    
-        // Using a standard PDF font
-        doc.moveDown(0.5);
-    
-        doc.fontSize(10);
-          
-        doc.text(`${body}`, {
-            width: 440,
-            align: 'left'
-          }
-          );
-          
-        doc.fontSize(12)
-        doc.text(`${doador}`)
-        
-        // Scale proprotionally to the specified width
-        doc.image(`data:image/png;base64,${assinatura}`, {width: 220})
-        doc.text(dateTimeFormatted(), {
-            width: 440,
-            align: 'right'
-          })
-        doc.end()
-    } catch (error) {
+        generateTermoPDF(numero_pedido, lista_itens, peso_estimado, nome_doador, cpf_doador, assinatura);
+    } catch (error: any) {
         if (error instanceof z.ZodError){
-            return reply.status(400).send(error.issues)
-        }        
+            return reply.status(400).send({'message': error.issues})
+        } else {
+            return reply.status(400).send({'message': error.message})
+        }       
     }
 })
 
@@ -359,6 +319,46 @@ app.listen({
     console.log('HTTP server running...')
 })
 
+function generateTermoPDF(numero_pedido: string, lista_itens: string, peso_estimado: string, nome_doador: string, cpf_doador: string, assinatura: string) {
+    const doc = new PDFDocument();
+    const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO';
+    const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` +
+        `Por meio deste Termo de Doação de Eletroeletrônico (“Termo”), transmito de livre e espontânea vontade, de forma gratuita e sem quaisquer ônus à Coletas Para Economia Circular LTDA, inscrita no CNPJ no. 49.840.854/0001-75 a propriedade, posse e o domínio que eu exercia sobre o(s) seguinte(s) bem(ns) eletrônico(s) que se encontra(m) em desuso, do(s) qual(is) sou legítimo possuidor e proprietário (“Doação”):` +
+        `\n\nPedido: ${numero_pedido}\n${lista_itens}\nPeso estimado: ${peso_estimado} kg\n(“Objeto(s) Doado(s)”)` +
+        `\n\nTambém declaro que estou de acordo com a destinação sustentável que será dada ao Objeto Doado pela GAIA, que será para reciclagem na recicladora parceira Indústria Fox Economia Circular LTDA, inscrita no CNPJ: no. 10.804.529/0001-11 em acordo com a Política Nacional de Resíduos Sólidos (PNRS) – Lei 12.305/10.` +
+        `\n\nAo realizar a Doação, declaro ter removido todo e qualquer dado pessoal possível de exclusão do Objeto Doado, seja pela remoção de chip, cartão de memória, ou outros, bem como declaro ter feito todo o possível para resetar o Objeto Doado a partir da restauração ao padrão de fábrica, não o tendo resetado apenas em caso de eletrônicos com defeitos que impossibilitem a conclusão desta ação.` +
+        `\n\nDeclaro ainda, que forneci meus dados pessoais para realização da Doação, bem como para comunicação e execução deste Termo, os quais serão tratados de acordo com a Lei Geral de Proteção de Dados Pessoais, Lei n.º 13.709, de 14 de agosto de 2018 (“LGPD”), e demais leis aplicáveis à proteção de dados, sendo garantido o uso exclusivo, armazenamento e/ou compartilhamento dos dados apenas para o cumprimento das referidas finalidades.` +
+        `\n\nEste Termo entrará em vigor, para todos os fins de direito, na data do seu aceite e permanecerá válido por prazo indeterminado.` +
+        `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
+        `\n\nE, assim, consinto com o presente Termo.`;
+
+    cpf_doador = blind_cpf(cpf_doador)
+
+    const doador = `\nDoador: ${nome_doador}   CPF: ${cpf_doador}\n`;
+
+    doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`));
+    doc.text(titulo, 100, 80);
+
+    doc.moveDown(0.5);
+    doc.fontSize(10);
+
+    doc.text(`${body}`, {
+        width: 440,
+        align: 'left'
+    });
+
+    doc.fontSize(12);
+    doc.text(`${doador}`);
+
+    // Scale proprotionally to the specified width
+    doc.image(`data:image/png;base64,${assinatura}`, { width: 220 });
+    doc.text(dateTimeFormatted(), {
+        width: 440,
+        align: 'right'
+    });
+    doc.end();
+}
+
 function allowedAccess(request: FastifyRequest) {
     let user_agent = String(request.headers['user-agent']);
     let allowed_agents = ['PostmanRuntime/7.36.3', 'Bubble',
@@ -386,4 +386,30 @@ function get_parameter_from_request_url(request: FastifyRequest) {
     const req_url_array = request.url.split('/');
     const id = req_url_array[req_url_array.length - 1];
     return id;
+}
+
+class MalformedCPF extends Error {
+    constructor(args: string | undefined) {
+      super(args);
+      this.name = 'MalformedCPF';
+    }
+}
+
+/****
+  Receives a cpf (only numbers or like xxx.xxx.xxx-xx) and returns ***.xxx.xxx-**
+****/ 
+function blind_cpf(cpf: string) {
+    
+    if (cpf.indexOf('.') === -1) {
+      if (cpf.length !== 11) {
+        throw new MalformedCPF(`CPF inválido: ${cpf}`);
+      }
+      cpf = `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9, 11)}`;
+    }
+    
+    if (cpf.length != 14) {
+      throw new MalformedCPF(`CPF inválido: ${cpf}`);
+    }
+
+    return `***.${cpf.slice(4, 7)}.${cpf.slice(8, 11)}-**`;
 }
