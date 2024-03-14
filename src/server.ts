@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import fastify, { FastifyRequest } from 'fastify'
+import fastify, { FastifyReply, FastifyRequest } from 'fastify'
 import {z} from 'zod'
 import PDFDocument from 'pdfkit';
 import { Base64Encode } from 'base64-stream'
@@ -45,24 +45,32 @@ Post calling with body:
 */
 
 app.post('/pdf', async (request, reply) => {
-    const termoSchema = z.object({
-        nome_doador: z.string(),
-        cpf_doador: z.string(),
-        lista_itens: z.string(),
-        peso_estimado: z.string(),
-        numero_pedido: z.string(),
-        assinatura: z.string()
-    })
-
-    try {
-        const {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido, assinatura} = termoSchema.parse(request.body)
-        generateTermoPDF(numero_pedido, lista_itens, peso_estimado, nome_doador, cpf_doador, assinatura);
-    } catch (error: any) {
-        if (error instanceof z.ZodError){
-            return reply.status(400).send({'message': error.issues})
-        } else {
-            return reply.status(400).send({'message': error.message})
-        }       
+    let { allowed_access, user_agent } = allowedAccess(request);
+    console.log(String(request.headers['user-agent']))
+    if (allowed_access) {
+        const termoSchema = z.object({
+            nome_doador: z.string(),
+            cpf_doador: z.string(),
+            lista_itens: z.string(),
+            peso_estimado: z.string(),
+            numero_pedido: z.string(),
+            assinatura: z.string()
+        })
+        try {
+            let {nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido, assinatura} = termoSchema.parse(request.body)
+            const data_hora_termo = dateTimeNowFormattedIso8601()
+            const termo = await persistTermoData(nome_doador, cpf_doador, lista_itens, peso_estimado, numero_pedido, assinatura, data_hora_termo)
+            
+            cpf_doador = blind_cpf(cpf_doador)
+            generateFileTermoPDF(numero_pedido, lista_itens, peso_estimado, nome_doador, cpf_doador, assinatura);
+            return reply.status(201).send(termo)
+        } catch (error: any) {
+            if (error instanceof z.ZodError){
+                return reply.status(400).send({'message': error.issues})
+            } else {
+                return reply.status(400).send({'message': error.message})
+            }       
+        }
     }
 })
 
@@ -319,7 +327,46 @@ app.listen({
     console.log('HTTP server running...')
 })
 
-function generateTermoPDF(numero_pedido: string, lista_itens: string, peso_estimado: string, nome_doador: string, cpf_doador: string, assinatura: string) {
+async function persistTermoData(nome_doador: string, cpf_doador: string, lista_itens: string, peso_estimado: string, numero_pedido: string, assinatura: string, data_hora_termo: string) {
+    return await prisma.termo.create({
+        data: {
+            nome_doador,
+            cpf_doador,
+            lista_itens,
+            peso_estimado,
+            numero_pedido,
+            assinatura,
+            data_hora_termo
+        }
+    });
+}
+
+function generateResponseTermoPDF(numero_pedido: string, 
+                            lista_itens: string, 
+                            peso_estimado: string, 
+                            nome_doador: string, 
+                            cpf_doador: string, 
+                            assinatura: string,
+                            reply: FastifyReply) {
+
+    const doc = getDocPDFTermo(numero_pedido, lista_itens, peso_estimado, nome_doador, cpf_doador, assinatura);
+    doc.pipe(reply.raw);
+    doc.end();
+}
+
+function generateFileTermoPDF(numero_pedido: string, 
+                            lista_itens: string, 
+                            peso_estimado: string, 
+                            nome_doador: string, 
+                            cpf_doador: string, 
+                            assinatura: string) {
+
+    const doc = getDocPDFTermo(numero_pedido, lista_itens, peso_estimado, nome_doador, cpf_doador, assinatura);
+    doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`));
+    doc.end();
+}
+
+function getDocPDFTermo(numero_pedido: string, lista_itens: string, peso_estimado: string, nome_doador: string, cpf_doador: string, assinatura: string) {
     const doc = new PDFDocument();
     const titulo = 'TERMO DE DOAÇÃO DE ELETROELETRÔNICO';
     const body = `Como Usuário(a) que decidiu contribuir com o objetivo da GAIA de promover a destinação sustentável para eletroeletrônicos em desuso, declaro descartar meus eletroeletrônicos em desuso, incentivando os processos de Reciclagem apoiados pela GAIA, para ajudar a evitar o acúmulo de lixo tóxico no planeta e o esgotamento dos recursos naturais. \n\n` +
@@ -332,31 +379,25 @@ function generateTermoPDF(numero_pedido: string, lista_itens: string, peso_estim
         `\n\nO presente Termo não cria qualquer outro vínculo do Usuário(a) com a GAIA, responsabilidade ou obrigação, além daqueles aqui contraídos. Nenhuma disposição do Termo deverá ser entendida como relação de parceria ou qualquer tipo de associação entre a GAIA e o Usuário(a) e não outorga à GAIA qualquer poder de representação, mandato, agência ou comissão.` +
         `\n\nE, assim, consinto com o presente Termo.`;
 
-    cpf_doador = blind_cpf(cpf_doador)
-
     const doador = `\nDoador: ${nome_doador}   CPF: ${cpf_doador}\n`;
 
-    doc.pipe(fs.createWriteStream(`/data/${numero_pedido}.pdf`));
     doc.text(titulo, 100, 80);
-
     doc.moveDown(0.5);
     doc.fontSize(10);
-
     doc.text(`${body}`, {
         width: 440,
         align: 'left'
     });
-
     doc.fontSize(12);
     doc.text(`${doador}`);
 
     // Scale proprotionally to the specified width
     doc.image(`data:image/png;base64,${assinatura}`, { width: 220 });
-    doc.text(dateTimeFormatted(), {
+    doc.text(dateTimeNowFormatted(), {
         width: 440,
         align: 'right'
     });
-    doc.end();
+    return doc;
 }
 
 function allowedAccess(request: FastifyRequest) {
@@ -367,19 +408,30 @@ function allowedAccess(request: FastifyRequest) {
     return { allowed_access, user_agent };
 }
 
-function dateTimeFormatted() {
+function dateTimeNowFormatted() {
+    let { date, month, year, hh, mm, ss } = getDateTimeNow();
+
+    return `${date}-${month}-${year} ${hh}:${mm}:${ss}`;
+}
+
+function dateTimeNowFormattedIso8601() {
+    let { date, month, year, hh, mm, ss } = getDateTimeNow();
+
+    return `${year}-${month}-${date}T${hh}:${mm}:${ss}.000Z`;
+}
+
+function getDateTimeNow() {
     let ts = Date.now();
 
     let date_ob = new Date(ts);
-    let date = date_ob.getDate();
-    let month = date_ob.getMonth() + 1;
+    let date = date_ob.getDate().toString().padStart(2, '0');
+    let month = (date_ob.getMonth() + 1).toString().padStart(2, '0');
     let year = date_ob.getFullYear();
 
-    let hh = date_ob.getHours();
-    let mm = date_ob.getMinutes();
-    let ss = date_ob.getSeconds();
-
-    return `${date}-${month}-${year} ${hh}:${mm}:${ss}`;
+    let hh = date_ob.getHours().toString().padStart(2, '0');
+    let mm = date_ob.getMinutes().toString().padStart(2, '0');
+    let ss = date_ob.getSeconds().toString().padStart(2, '0');
+    return { date, month, year, hh, mm, ss };
 }
 
 function get_parameter_from_request_url(request: FastifyRequest) {
