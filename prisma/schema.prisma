@@ -1,5 +1,7 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+// npx prisma migrate dev (to migrate new model)
+// npx prisma studio (to open prisma studio for exploring tables)
 
 generator client {
   provider = "prisma-client-js"
@@ -15,5 +17,17 @@ model Cep {
   inicial String
   final String
   descricao String
+  createdAt DateTime @default(now())
+}
+
+model Termo {
+  id String @id @default(cuid())
+  nome_doador String
+  cpf_doador String
+  lista_itens String
+  peso_estimado String
+  numero_pedido String
+  assinatura String
+  data_hora_termo DateTime
   createdAt DateTime @default(now())
 }
