@@ -143,7 +143,6 @@ app.get('/cep', async (request, reply) => {
                 return reply.status(200).send({result})
             } else {
                 const cep_to_search = req_query_array[1].replace('-','')
-                console.log(cep_to_search)
                 if(cep_to_search.trim() === '') {
                     return {'message': ''}
                 }
@@ -160,8 +159,10 @@ app.get('/cep', async (request, reply) => {
                     }
                     
                     if (found_cep){
+                        console.log(`Found ${cep_to_search}`)
                         return reply.status(200).send({'message': 'Estamos disponíveis em sua cidade: ' + found_regiao})
                     } else {
+                        console.log(`NOT Found ${cep_to_search}`)
                         return reply.status(200).send({'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'})
                     }
                 }
