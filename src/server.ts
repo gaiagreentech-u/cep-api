@@ -162,7 +162,7 @@ app.get('/cep', async (request, reply) => {
                     if (found_cep){
                         return reply.status(200).send({'message': 'Estamos disponíveis em sua cidade: ' + found_regiao})
                     } else {
-                        return reply.status(404).send({'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'})
+                        return reply.status(200).send({'message': 'Ainda não chegamos na sua cidade. Estamos trabalhando para levar a GAIA para todo o Brasil. Você pode nos ajudar a acelerar nossa revolução, nos indicando para sua marca de eletroeletrônicos favorita.'})
                     }
                 }
             } 
